@@ -1,0 +1,2 @@
+- Playing with Firebase Functions (2. gen), based on this tutorial: https://firebase.google.com/docs/functions/get-started?gen=2nd
+- Using Firebase Emulator Suite
