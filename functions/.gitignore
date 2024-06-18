@@ -7,4 +7,5 @@ typings/
 
 # Node.js dependency directory
 node_modules/
-*.local
+# Normally these would be ignored as well, but I include them for demonstration purposes
+#*.local
