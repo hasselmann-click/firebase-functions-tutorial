@@ -19,7 +19,7 @@
 // });
 
 import { logger, onInit } from "firebase-functions";
-import { onRequest } from "firebase-functions/v2/https";
+import { onCall } from "firebase-functions/v2/https";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { TextInput, defineInt, defineSecret, defineString } from "firebase-functions/params";
 
@@ -46,7 +46,7 @@ const minInstancesConfig = defineInt('HELLO_WORLD_MININSTANCES', {
 // runtime value:
 const welcomeMessage = defineString('WELCOME_MESSAGE');
 // sensitive value:
-// Will be looked up in the secret manager or asked for on deploy.
+// Will be looked up in the Secret Manager API or asked for on deploy.
 // For testing (in the emulator) we can use a .secret.local file with dummy values
 // although there is an issue open: https://github.com/firebase/firebase-tools/issues/5520
 // Workaround is to add an empty entry to .env.local for the secret.
@@ -59,7 +59,7 @@ onInit(() => {
 
 // Take the text parameter passed to this HTTP endpoint and insert it into
 // Firestore under the path /messages/:documentId/original
-exports.addmessage = onRequest({
+export const addmessage = onCall<{ text: string }, Promise<{ result: string }>>({
   preserveExternalChanges: false, // whether to merge these options with the settings of the currently-deployed version
   concurrency: 80, // 1 - 1000; concurrent requests per instance; think about RAM
   minInstances: minInstancesConfig, // Keep 0 instances warm for "this latency-critical function"
@@ -68,7 +68,7 @@ exports.addmessage = onRequest({
   memory: "128MiB",
   cpu: 1, // scales with memory, if not set explicitly
   secrets: [apiKey], // bind secret to function
-}, async (req, res) => {
+}, async (req) => {
 
   // use function parameter
   logger.log(`Welcome message: ${welcomeMessage.value()}`);
@@ -76,19 +76,20 @@ exports.addmessage = onRequest({
   logger.log(`Could initialize an api client locally with key ${apiKey.value()}.`);
 
   // Grab the text parameter.
-  const original = req.query.text;
+  const original = req.data.text;
+  // const original = req.rawRequest.query.text;
   // Push the new message into Firestore using the Firebase Admin SDK.
   const writeResult = await getFirestore()
     .collection("messages")
     .add({ original: original });
   // Send back a message that we've successfully written the message
-  res.json({ result: `Message with ID: ${writeResult.id} added.` });
+  return { result: `Message with ID: ${writeResult.id} added.` };
 });
 
 // Listens for new messages added to /messages/:documentId/original
 // and saves an uppercased version of the message
 // to /messages/:documentId/uppercase
-exports.makeuppercase = onDocumentCreated("/messages/{documentId}", (event) => {
+export const makeuppercase = onDocumentCreated("/messages/{documentId}", (event) => {
   // Grab the current value of what was written to Firestore.
   const original = event.data?.data().original as string | undefined;
   if (!original) {
