@@ -68,6 +68,7 @@ export const addmessage = onCall<{ text: string }, Promise<{ result: string }>>(
   memory: "128MiB",
   cpu: 1, // scales with memory, if not set explicitly
   secrets: [apiKey], // bind secret to function
+  enforceAppCheck: true
 }, async (req) => {
 
   // use function parameter

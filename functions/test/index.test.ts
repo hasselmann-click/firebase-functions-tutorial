@@ -1,13 +1,17 @@
-import { expect, jest, test } from "@jest/globals";
+import { afterAll, expect, jest, test } from "@jest/globals";
 import { CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from "firebase-functions";
 
 import firebasefunctiontest from 'firebase-functions-test';
-const { wrap } = firebasefunctiontest(/* firebaseConfig. Empty for local testing */);
+const { wrap, cleanup } = firebasefunctiontest(/* firebaseConfig. Empty for local testing */);
 // import everything to be able to spy on the "getFirestore" exported function
 import * as firestoreAdmin from "firebase-admin/firestore";
 // import functions to test after firebasefunctiontest initialization
 import { addmessage } from '../src/index';
+
+afterAll(() => {
+    cleanup();
+})
 
 test("addmessage", async () => {
 
