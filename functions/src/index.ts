@@ -19,7 +19,7 @@
 // });
 
 import { logger, onInit } from "firebase-functions";
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { TextInput, defineInt, defineSecret, defineString } from "firebase-functions/params";
 
@@ -68,8 +68,14 @@ export const addmessage = onCall<{ text: string }, Promise<{ result: string }>>(
   memory: "128MiB",
   cpu: 1, // scales with memory, if not set explicitly
   secrets: [apiKey], // bind secret to function
-  enforceAppCheck: true
+  enforceAppCheck: true,
 }, async (req) => {
+
+  // Checking that the user is authenticated.
+  logger.log(`Auth: ${JSON.stringify(req.auth)}`);
+  if (!req.auth) {
+    throw new HttpsError("failed-precondition", "Unauthenticated.");
+  }
 
   // use function parameter
   logger.log(`Welcome message: ${welcomeMessage.value()}`);
